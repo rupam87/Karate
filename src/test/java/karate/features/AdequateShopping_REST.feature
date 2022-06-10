@@ -52,7 +52,7 @@ Feature: Test REST api calls on adequateshop.com
     """
     * configure headers = authheader()
 
-  @getUsers-adequate
+  @getUsers-adequate @all
   Scenario: GET all Users
     Given path 'users'
     Given param page = '1'
