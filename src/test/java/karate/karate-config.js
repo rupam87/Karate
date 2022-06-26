@@ -11,6 +11,7 @@ function fn() {
         goRestUrl : 'https://gorest.co.in/public/',
         reqResUrl : 'https://reqres.in/',
         adequateShopUrl : 'http://restapi.adequateshop.com/api/',
+        soapCalculatorUrl : 'http://www.dneonline.com/calculator.asmx',
         someUrlBase : ''
     }
 
