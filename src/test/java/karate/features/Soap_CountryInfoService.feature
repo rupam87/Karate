@@ -23,6 +23,7 @@ Feature: CountryInfo SOAP Service Tests
         </soap12:Body>
       </soap12:Envelope>
       """
+      And retry until responseStatus == 200
       When method post
       Then status 200
       * print response
@@ -76,5 +77,4 @@ Feature: CountryInfo SOAP Service Tests
           </m:Languages>
         </m:tCountryInfo>
       """
-
 

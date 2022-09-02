@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+
+    tools
+            {
+                maven 'Maven_3.8.6'
+                jdk 'JDK-17.0.2'
+            }
+
+    stages
+            {
+                stage('Git Repo Checkout') {
+                    steps {
+                        // One or more steps need to be included within the steps block.
+                        echo 'Inside Steps of Stage: Git Repo Checkout'
+                        git branch: 'main', credentialsId: '61a79bac-d4c2-44de-9402-8d29a022858e', url: 'https://github.com/rupam87/Karate'
+                    }
+                }
+                stage('Execute Maven Command') {
+                    steps {
+                        // One or more steps need to be included within the steps block.
+                        echo 'Executing Command:  mvn clean test -Pkarate -Dtest=KarateRunner -DKarate.env=qa "-Dkarate.options=--tags @FullCountryInfo"'
+                        bat 'mvn clean test -Pkarate -Dtest=KarateRunner -DKarate.env=qa "-Dkarate.options=--tags @FullCountryInfo"'
+                    }
+                }
+                stage('Zip Attachment For Email')
+                        {
+                            steps {
+                                script {
+                                    zip zipFile: 'testresults.zip', archive: false, dir: 'target/reports', overwrite: true
+                                }
+                                echo 'Zip created with name : testresults.zip  from folder : target/reports'
+                            }
+                        }
+            }
+
+    post
+            {
+                always
+                        {
+                            echo 'Inside Post Block, will attempt to archive result folder as artifact'
+                            // Archive Result Artifacts before deletion
+                            archiveArtifacts allowEmptyArchive: true, artifacts: 'testresults.zip', followSymlinks: false
+
+                            // One or more steps need to be included within each condition's block.
+                            echo 'Artifacts successful, will attempt to send email with result!!'
+
+                            emailext to: 'qatestmail99@gmail.com',
+                                    subject: "$JOB_NAME $BUILD_DISPLAY_NAME :: ${currentBuild.currentResult}",
+                                    attachLog: true, attachmentsPattern: 'testresults.zip',
+                                    body: "Jenkins Job executed, time taken : ${currentBuild.durationString}. More info, including Archived results can be found at - $BUILD_URL.",
+                                    compressLog: true, mimeType: 'text/html'
+
+                            echo 'Email sent, will attempt to delete workspace directory as cleanup.'
+
+                            // delete the checked out dir
+                            cleanWs()
+
+                            echo 'Workspace contents deleted'
+                        }
+            }
+
+}

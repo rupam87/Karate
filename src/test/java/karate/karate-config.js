@@ -22,7 +22,7 @@ function fn() {
         config.someUrlBase = 'https://e2e-host/v1/auth';
       }
 
-    karate.configure('retry',{ count:5, interval:5000});
+    karate.configure('retry',{ count:3, interval:5000});
     karate.configure('connectTimeout', 5000);
     karate.configure('readTimeout', 5000);
 
