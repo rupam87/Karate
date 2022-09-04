@@ -1,6 +1,14 @@
 pipeline {
     agent any
 
+     parameters {
+        //booleanParam(name: "TEST_BOOLEAN", defaultValue: true, description: "Sample boolean parameter")
+        string(name: "tags", defaultValue: "@FullCountryInfo", trim: true, description: "The Karate Scenario Tag to be run.")
+        //text(name: "TEST_TEXT", defaultValue: "Jenkins Pipeline Tutorial", description: "Sample multi-line text parameter")
+        // password(name: "TEST_PASSWORD", defaultValue: "SECRET", description: "Sample password parameter")
+        choice(name: "environment", choices: ["qa", "dev", "uat"], description: "The environment on which to kick off ")
+    }
+
     tools
             {
                 maven 'Maven_3.8.6'
@@ -9,27 +17,27 @@ pipeline {
 
     stages
             {
-                stage('Git Repo Checkout') {
+                stage("Git Repo Checkout") {
                     steps {
                         // One or more steps need to be included within the steps block.
-                        echo 'Inside Steps of Stage: Git Repo Checkout'
+                        echo "Inside Steps of Stage: Git Repo Checkout"
                         git branch: 'main', credentialsId: '61a79bac-d4c2-44de-9402-8d29a022858e', url: 'https://github.com/rupam87/Karate'
                     }
                 }
-                stage('Execute Maven Command') {
+                stage("Execute Maven Command") {
                     steps {
                         // One or more steps need to be included within the steps block.
-                        echo 'Executing Command:  mvn clean test -Pkarate -Dtest=KarateRunner -DKarate.env=qa "-Dkarate.options=--tags @FullCountryInfo"'
-                        bat 'mvn clean test -Pkarate -Dtest=KarateRunner -DKarate.env=qa "-Dkarate.options=--tags @FullCountryInfo"'
+                        echo "Executing Command:  mvn clean test -Pkarate -Dtest=KarateRunner -DKarate.env= $params.environment \"-Dkarate.options=--tags $params.tags\""
+                        bat "mvn clean test -Pkarate -Dtest=KarateRunner -DKarate.env=$params.environment \"-Dkarate.options=--tags $params.tags\""
                     }
                 }
-                stage('Zip Attachment For Email')
+                stage("Zip Attachment For Email")
                         {
                             steps {
                                 script {
-                                    zip zipFile: 'testresults.zip', archive: false, dir: 'target/reports', overwrite: true
+                                    zip zipFile: "testresults.zip", archive: false, dir: "target/reports", overwrite: true
                                 }
-                                echo 'Zip created with name : testresults.zip  from folder : target/reports'
+                                echo "Zip created with name : testresults.zip  from folder : target/reports"
                             }
                         }
             }
@@ -38,25 +46,24 @@ pipeline {
             {
                 always
                         {
-                            echo 'Inside Post Block, will attempt to archive result folder as artifact'
+                            echo "Inside Post Block, will attempt to archive result folder as artifact"
                             // Archive Result Artifacts before deletion
-                            archiveArtifacts allowEmptyArchive: true, artifacts: 'testresults.zip', followSymlinks: false
+                            archiveArtifacts allowEmptyArchive: true, artifacts: "testresults.zip", followSymlinks: false
 
                             // One or more steps need to be included within each condition's block.
-                            echo 'Artifacts successful, will attempt to send email with result!!'
+                            echo "Artifacts successful, will attempt to send email with result!!"
 
-                            emailext to: 'qatestmail99@gmail.com',
+                            emailext to: "qatestmail99@gmail.com",
                                     subject: "$JOB_NAME $BUILD_DISPLAY_NAME :: ${currentBuild.currentResult}",
-                                    attachLog: true, attachmentsPattern: 'testresults.zip',
+                                    attachLog: true, attachmentsPattern: "testresults.zip",
                                     body: "Jenkins Job executed, time taken : ${currentBuild.durationString}. More info, including Archived results can be found at - $BUILD_URL.",
-                                    compressLog: true, mimeType: 'text/html'
-
-                            echo 'Email sent, will attempt to delete workspace directory as cleanup.'
+                                    compressLog: true, mimeType: "text/html"
+                            echo "Email sent, will attempt to delete workspace directory as cleanup."
 
                             // delete the checked out dir
                             cleanWs()
 
-                            echo 'Workspace contents deleted'
+                            echo "Workspace contents deleted"
                         }
             }
 
